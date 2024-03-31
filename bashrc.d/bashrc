@@ -1,0 +1,185 @@
+### $HOME/.bashrc.d/bashrc
+
+#: << 'END_COMMENT'
+#END_COMMENT
+
+# Ensure vi is set as EDITOR
+#export EDITOR="/usr/bin/vi"
+
+# Ensure vim is set as EDITOR
+export EDITOR="/usr/bin/vim"
+
+# Editor to use when editing units;
+# overrides $EDITOR and $VISUAL
+export SYSTEMD_EDITOR="/usr/bin/vim"
+
+# Define VARIANT Environment Variables
+#grep --extended-regexp '^VARIANT.*' /etc/os-release &>/dev/null;
+#export $(grep --extended-regexp '^VARIANT.*' /etc/os-release);
+
+#for variant in $(grep --extended-regexp '^VARIANT.*' /etc/os-release);
+#do
+#  if [[ $? -eq 0 ]]; then
+#    #echo $?;
+#    export OS_$variant;
+#  fi
+#done
+
+### Custom
+
+### ***GLOBAL ALIASES***
+alias lst='ls -Zlathri'
+alias lstblk='lsblk -fpm'
+alias sudo='sudo '
+
+
+alias butane='podman run --pull=always                       \
+                         --rm --interactive                  \
+                         --security-opt label=disable        \
+                         --volume ${PWD}:/pwd --workdir /pwd \
+                         quay.io/coreos/butane:release'
+
+#alias coreos-installer='podman run --pull=always            \
+#                        --rm --interactive                  \
+#                        --security-opt label=disable        \
+#                        --volume ${PWD}:/pwd --workdir /pwd \
+#                        quay.io/coreos/coreos-installer:release'
+
+alias ignition-validate='podman run --rm --interactive       \
+                         --security-opt label=disable        \
+                         --volume ${PWD}:/pwd --workdir /pwd \
+                         quay.io/coreos/ignition-validate:release'
+
+
+#alias container-registry-local='podman container run         \
+#                         --pull=always --rm --interactive    \
+#                         --detach --tty                      \
+#                         --publish 5000:5000                 \
+#                         --name registry                     \
+#                         docker.io/library/registry'
+
+
+function cl() {
+    DIR="$*";
+    # if no DIR given, go home
+    if [ $# -lt 1 ]; then
+      DIR=$HOME;
+    fi;
+    builtin cd "${DIR}" && \
+    # use your preferred ls command
+    lst
+}
+### ***END GLOBAL ALIASES***
+
+### ***HISTORY***
+
+# Save 1000 lines of history in memory
+#export HISTSIZE=1000
+# The maximum number of lines contained in the history file
+#export HISTFILESIZE=10000
+export HISTFILESIZE=-1
+
+# Ignore redundant or space commands && # Eliminate duplicates across the whole history
+export HISTCONTROL='ignoreboth:erasedups'
+
+# Append to history instead of overwrite
+shopt -s histappend
+
+# If the histverify shell option is enabled, and Readline is being used,
+#+ history substitutions are not immediately passed to the shell parser.
+#+ Instead, the expanded line is reloaded into the Readline editing buffer for further modification.
+shopt -s histverify
+
+# If Readline is being used, and the histreedit shell option is enabled,
+#+ a failed history expansion will be reloaded into the Readline editing buffer for correction.
+shopt -s histreedit
+
+# Multiple commands on one line show up as a single line
+shopt -s cmdhist
+
+
+# Ignore more commands
+#HISTIGNORE='cd*:ls*:ll*:lst*:cl*:pwd*:clear*:history*:uname -a*:
+#:sudo dnf upgrade -y*:sudo dnf upgrade*:sudo dnf clean all*:
+#:dnf check-update*:dnf check-upgrade*:sudo dnf install*:
+#:sudo dnf check-update*:sudo dnf check-upgrade*:
+#:sudo ls*:top*:htop*:sudo reboot*:sudo poweroff*:
+#:source .bashrc*:
+
+#:git init*:git log*:git branch*:git status*:git pull*:
+#:git remote*:git remote -v*:
+#:git diff*:git diff --staged*:git diff --cached*:
+#:git show*:
+#:git add --all*:git add .*:git log --oneline*:git gl*'
+
+### ***END HISTORY***
+
+# PS1 - Original
+# \[\e[${PROMPT_COLOR:-32}m\]\u@\h\[\e[0m\]:\[\e[${PROMPT_COLOR:-32}m\]\w\[\e[0;31m\]${?#0}\[\e[0m\]\$
+
+### ***Git***
+
+#function exit_status_check() {
+#  if [ $? -eq 0 ]; then
+#    #echo "${?}";
+#    declare exit_status="success";
+#    #echo "success";
+#  else
+#    #echo "${?#0}";
+#    declare exit_status="error: ${?#0}";
+#    #echo "error: ${?#0}";
+#  fi;
+#  echo "$exit_status";
+#}
+
+declare C_RED0="\033[38;5;9m"
+declare C_RED1="\033[38;5;198m"
+declare NO_FORMAT="\033[0m"
+
+#declare RED='\033[0;31m'
+#declare GREEN='\033[0;32m'
+#declare YELLOW='\033[0;33m'
+#declare NC='\033[0m' # No Color
+
+function exit_status_colour() {
+  if [ $? -eq 0 ]; then
+    echo "32m${?}";
+    #echo "32m""$(exit_status)";
+    #echo "32m";
+  else
+    echo "31m${?#0}";
+    #echo "31m error: ${?#0}";
+    #echo "31m""$(exit_status)";
+    #echo "31m";
+  fi;
+}
+
+function is_toolbox() {
+    if [ -f "/run/.toolboxenv" ]
+    then
+        toolbox_name=$(cat /run/.containerenv | grep --only-matching --perl-regexp "(?<=name=\")[^\";]+")
+        echo "[${toolbox_name}]"
+    fi
+}
+
+if [ -f ~/.git-completion.sh ]; then
+	source ~/.git-completion.sh
+fi
+
+if [ -f ~/.git-prompt.sh ]; then
+	source ~/.git-prompt.sh
+	#export PS1=' \n \[\e[0;33m\]\w\[\e[0m\]\n $(__git_ps1 "(%s)") > '
+	#export PS1=' \n \[\e[1;34m\]\w\n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\] $(__git_ps1 "(%s)") >_ '
+	
+	#export PS1=' \n \[\e[1;34m\]\w\n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\]$(__git_ps1 "(%s)") \[\e[0;31m\]${?#0}\[\e[0m\] >_ '
+	#export PS1=' \n \[\e[1;34m\]\w\n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\]$(__git_ps1 "(%s)") \[\e[0;32m\]${?}\[\e[0m\] >_ '
+
+	#export PS1=' \n \[\e[1;34m\]\w \[\e[0m Exit Status:\] \[\e[0;$(exit_status_colour) \[\e[0m\] \n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\] $(__git_ps1 "(%s)") >_ '
+	#export PS1=' \n \[\e[1;34m\]\w  \[\e[0;$(exit_status_colour) \[\e[0m\] \n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\] $(__git_ps1 "(%s)") >_ '
+
+	export PS1=' \n \[\e[1;34m\]\w  \[\e[0;$(exit_status_colour) \[\e[0m\] \[\e[34m\]$(is_toolbox)\] \n \[\e[01;33m\]\u\[\e[0;33m\]@\H\[\e[0m\] $(__git_ps1 "(%s)") >_ '
+		
+	PS0=$'\n'
+fi
+
+### ***End Git***
